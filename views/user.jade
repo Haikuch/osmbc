@@ -57,7 +57,14 @@ block content
                      ["on","off"],
                      "Send a mail for every change of a comment. I recommend to use OFF, but sometimes you may be interested in anything written in comments, than - and only then - you should use ON")
 
-    
+      if bootstrapThemes
+        +labeledSelect("Theme",
+                        "bootswatch",
+                        usershown.bootswatch,
+                        bootstrapThemes,
+                        bootstrapThemes,
+                        "Select your Bootstrap Theme, google 'bootswatch' to see samples")
+
       - var langlistWithUser = langlist.concat(usershown.OSMUser)
 
       +labeledMultiSelect("Mail defined comments",

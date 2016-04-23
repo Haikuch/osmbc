@@ -90,10 +90,16 @@ function renderUserId(req, res, next) {
     function finalRenderCB(err) {
       debug('finalRenderCB');
       if (err) return next(err);
+      var bootstrapThemes;
+      if (config.getValue("AppName")!=="OSMBC") {
+        console.log("setting themes");
+        bootstrapThemes = ["cerulean","cosmo","cyborg","darkly","flatly","journal","lumen","paper","readable","sandstone","simplex","slate","spacelab","superhero","united","yeti"]
+      }
       should.exist(res.rendervar);
       res.render('user',{usershown:user,
                         changes:changes,
                         params:params,
+                        bootstrapThemes:bootstrapThemes,
                         langlist: config.getLanguages(),
                         settings:settingsModule.listSettings,
                         languages:settingsModule.listLanguages,
@@ -112,6 +118,7 @@ function postUserId(req, res, next) {
                  mailAllComment:req.body.mailAllComment,
                  mailNewCollection:req.body.mailNewCollection,
                  mailComment:req.body.mailComment,
+                 bootswatch:req.body.bootswatch,
                  mailBlogLanguageStatusChange:req.body.mailBlogLanguageStatusChange,
                  email:req.body.email,
                  access:req.body.access};
