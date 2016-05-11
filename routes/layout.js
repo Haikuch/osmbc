@@ -34,14 +34,21 @@ function prepareRenderLayout(req,res,next) {
 
 
 
-  // Variables for rendering purposes
-
+  let style = req.session.style;
+  if (!style) {
+    for (let k in config.getValue("styles")) {
+      style = k;
+      break;
+    }
+  }
   // ListOfOrphanBlog is used to show all orphanedBlog to assign an article to
-  var style = "style.css";
-  if (req.query.tempstyleOff == 'true') req.session.tempstyle=true;
-  if (req.query.tempstyleOff == 'false') delete req.session.tempstyle;
-  if (!req.session.tempstyle && config.getValue("style")) style = config.getValue("style");
-  
+  if (req.query.setStyle) {
+    req.session.style=req.query.setStyle;
+    style = req.query.setStyle;
+  }
+
+  let stylePath = config.getValue("styles")[style];
+  req.session.stylePath = stylePath;
 
 
   var languages = [];
@@ -158,6 +165,7 @@ function prepareRenderLayout(req,res,next) {
                       bootstrap:bootstrap,
                       osmbc_version:version.osmbc_version,
                       style:style,
+                      stylePath:stylePath,
                       title:config.getValue("AppName"),
                       md_render:util.md_render
                     };
