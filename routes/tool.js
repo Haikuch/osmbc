@@ -12,6 +12,7 @@ var https = require('https');
 var moment= require('moment');
 var emailValidator = require('email-validator');
 var BlogRenderer = require('../render/BlogRenderer.js');
+var ical = require('ical-generator');
 
 var markdown = require("markdown-it")()
   .use(require("markdown-it-sup"))
@@ -56,6 +57,38 @@ function renderJSONCalendar(req,res,next) {
     if (err) return next(err);
 
     res.json(result);
+  });
+}
+
+
+var cache = {};
+
+// change to
+// https://github.com/sebbo2002/ical-generator
+
+function renderICSCalendar(req,res,next) {
+  debug('renderICSCalendar');
+  var country = req.params.country;
+
+
+  fs.appendFileSync("ICSCalendarusage.log "+country+" "+new Date()+"\n");
+
+  parseEvent.calenderToJSON({},function(err,result){
+    if (err) return next(err);
+    if (cache[country] && cache[country].stamp.getTime() >= (new Date().getTime()-6*60*1000)) return res.end(cache[country].ics);
+    var ical = new icalendar.iCalendar();
+    for (let i=0;i<result.length;i++) {
+      let e = result[i];
+      //if (country != "all" && country != e.country) continue;
+      var event = new ical.addComponent('VEvent');
+      event.setSummary(e.title);
+      event.setDate(e.startDate, e.endDate);
+      event.setLocation(e.town);
+    }
+    var text = ical.toString();
+    cache[country] = {stamp:new Date(),ics:text};
+
+    res.end(text+"  \n"+country);
   });
 }
 
@@ -257,5 +290,6 @@ router.post('/picturetool', postPictureTool);
 
 publicRouter.get("/calendar/preview",renderPublicCalendar);
 publicRouter.get("/calendar/json",renderJSONCalendar);
+publicRouter.get("/calendar/:country.ics",renderICSCalendar);
 module.exports.router = router;
 module.exports.publicRouter = publicRouter;
