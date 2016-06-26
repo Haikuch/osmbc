@@ -13,6 +13,7 @@ var moment= require('moment');
 var emailValidator = require('email-validator');
 var BlogRenderer = require('../render/BlogRenderer.js');
 var ical = require('ical-generator');
+var farmhash = require('farmhash');
 
 var markdown = require("markdown-it")()
   .use(require("markdown-it-sup"))
@@ -62,34 +63,59 @@ function renderJSONCalendar(req,res,next) {
 
 
 var cache = {};
+config.initialise();
+let calendarList = config.getValue("calendarList");
+let domain = config.getValue("url");
+for (let i=0;i<calendarList.length;i++) {
+  let country = calendarList[i];
+  let url = domain+config.getValue("htmlroot")+"/calendar/"+country+".ics";
+  cache[country.toLowerCase()] = new ical({domain:domain,url:url,name:"OpenStreetMap["+country+"]"});
+}
+let calendarurl = domain+config.getValue("htmlroot")+"/calendar/all.ics";
+cache.all =  new ical({domain:domain,url:calendarurl,name:"OpenStreetMap"});
 
-// change to
-// https://github.com/sebbo2002/ical-generator
+function readICSFromWiki() {
+  debug('readICSFromWiki');
+  parseEvent.calenderToJSON({},function(err,result){
+    if (err) {
+      console.log("Error while reading calendar entries from wiki:");
+      console.dir(err);
+      return;
+    }
+    console.log("Reading calendar entries from wiki Current Number: "+result.events.length);
+    for (let i=0;i<result.events.length;i++) {
+      let e = result.events[i];
+
+      cache.all.createEvent({
+        uid : farmhash.fingerprint64(e.text+ e.startDate),
+        start: e.startDate,
+        end: e.endDate,
+        summary: e.text,
+        location: e.town,
+        allDay:true
+      });
+      if (cache[e.country.toLowerCase()]) {
+        cache[e.country.toLowerCase()].createEvent({
+          uid : farmhash.fingerprint64(e.text+ e.startDate),
+          start: e.startDate,
+          end: e.endDate,
+          summary: e.text,
+          location: e.town,
+          allDay:true
+        });
+      }
+    }
+  });
+  setTimeout(readICSFromWiki,1000*60*10);
+}
+readICSFromWiki();
 
 function renderICSCalendar(req,res,next) {
   debug('renderICSCalendar');
+  fs.appendFileSync("ICSCalendarusage.log",country+" "+new Date()+"\n");
   var country = req.params.country;
-
-
-  fs.appendFileSync("ICSCalendarusage.log "+country+" "+new Date()+"\n");
-
-  parseEvent.calenderToJSON({},function(err,result){
-    if (err) return next(err);
-    if (cache[country] && cache[country].stamp.getTime() >= (new Date().getTime()-6*60*1000)) return res.end(cache[country].ics);
-    var ical = new icalendar.iCalendar();
-    for (let i=0;i<result.length;i++) {
-      let e = result[i];
-      //if (country != "all" && country != e.country) continue;
-      var event = new ical.addComponent('VEvent');
-      event.setSummary(e.title);
-      event.setDate(e.startDate, e.endDate);
-      event.setLocation(e.town);
-    }
-    var text = ical.toString();
-    cache[country] = {stamp:new Date(),ics:text};
-
-    res.end(text+"  \n"+country);
-  });
+  if (!cache[country]) return next(new Error("Country not defined"));
+  cache[country].serve(res);
 }
 
 function renderCalenderAsMarkdown(req,res,next) {

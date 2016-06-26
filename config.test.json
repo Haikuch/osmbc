@@ -49,7 +49,8 @@
   "EmailSender":"noreply@gmail.com",
   "url":"https://testosm.bc",
   "SMTP":"smtps not defined, as all mails should be mocked by sinon in test",
-  "sessionStore":"connect-pg-simple"
+  "sessionStore":"connect-pg-simple",
+  "calendarList":["germany","france"]
 
 
 }
