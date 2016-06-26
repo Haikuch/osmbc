@@ -13,7 +13,7 @@ var moment= require('moment');
 var emailValidator = require('email-validator');
 var BlogRenderer = require('../render/BlogRenderer.js');
 var ical = require('ical-generator');
-var farmhash = require('farmhash');
+var stringhash = require('string-hash');
 
 var markdown = require("markdown-it")()
   .use(require("markdown-it-sup"))
@@ -87,7 +87,7 @@ function readICSFromWiki() {
       let e = result.events[i];
 
       cache.all.createEvent({
-        uid : farmhash.fingerprint64(e.text+ e.startDate),
+        uid : stringhash(e.text+ e.startDate),
         start: e.startDate,
         end: e.endDate,
         summary: e.text,
@@ -96,7 +96,7 @@ function readICSFromWiki() {
       });
       if (cache[e.country.toLowerCase()]) {
         cache[e.country.toLowerCase()].createEvent({
-          uid : farmhash.fingerprint64(e.text+ e.startDate),
+          uid : stringhash(e.text+ e.startDate),
           start: e.startDate,
           end: e.endDate,
           summary: e.text,
