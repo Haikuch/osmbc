@@ -7,6 +7,8 @@ var request = require("request");
 var markdown = require('markdown-it')();
 var configModule = require('../model/config.js');
 
+var osmcal = require('osmcal');
+
 
 
 // This page is delivering the calendar events
@@ -243,54 +245,21 @@ function calenderToMarkdown2(countryFlags,ct,option,cb) {
   var enableCountryFlags = option.countryFlags;
 
   var result;
+  var from = new Date(date);
+  var to = new Date(date);
+
+  // get all Events from today
+  from.setDate(from.getDate());
+  // until in two weeks
+  to.setDate(to.getDate()+duration);
   var errors = null;
   debug("Date: %s",date);
-  request(wikiEventPage, function(error, response, body) {
-    var json = JSON.parse(body);
-    //body = (json.query.pages[2567].revisions[0]["*"]);
-    body = json.query.pages;
-    for (var k in body) {
-      body = body[k];
-      break;
-    }
-    body = body.revisions[0]['*'];
 
-    var point = body.indexOf("\n");
+  osmcal.calenderToJSON({startDate:from,endDate:to},function(err,body) {
+    if (err) return cb(err);
+    console.log(body);
+    let events = body.events;
 
-    var from = new Date(date);
-    var to = new Date(date);
-
-    // get all Events from today
-    from.setDate(from.getDate());
-    // until in two weeks
-    to.setDate(to.getDate()+duration);
-
-    var events = [];
-
-    while (point>= 0) {
-   
-      var line = body.substring(0,point);
-      body = body.substring(point+1,999999999);
-      point = body.indexOf("\n");
-      result = parseLine(line);
-
-      if (typeof(result)=="string") {
-        if (!errors) errors = "\n\nUnrecognized\n";
-        errors +=result+"\n";
-        result = null;
-      }
-    
-
-
-      if (result) {
-        if (result.endDate >= from && result.startDate <= to) {
-          events.push(result);
-          result.markdown = parseWikiInfo(result.desc);
-          result.town = parseWikiInfo(result.town,{dontLinkify:true});
-          result.country = parseWikiInfo(result.country,{dontLinkify:true});
-        }
-      }
-    }
     var townLength = 0;
     var descLength = 0;
     var dateLength = 0;
@@ -358,7 +327,7 @@ function calenderToMarkdown(options,cb) {
   calenderToMarkdown2(calendarFlags, ct, options, cb);
 }
 
-function calenderToJSON(option,cb) {
+function calenderToJSON(options,cb) {
   debug('calenderToJSON');
   should(typeof(cb)).eql("function");
 
@@ -393,7 +362,9 @@ function calenderToJSON(option,cb) {
 
 
 
-      if (result) {
+      if (result &&
+          (!options.startDate || (result.endDate >= options.startDate)) &&
+          (! options.endDate ||  (result.startDate <= options.endDate))) {
           events.push(result);
           result.markdown = parseWikiInfo(result.desc);
           result.text = parseWikiInfo(result.desc,{dontLinkify:true});
@@ -413,11 +384,13 @@ function calenderToJSON(option,cb) {
       "version": "0.1",
       "generator": "TheFive Wiki Calendar Parser",
       "time":new Date(),
-
+      filter:{},
       "copyright": "The data is taken from http://wiki.openstreetmap.org/wiki/Template:Calendar and follows its license rules.",
       "events":events,
       "errors":errors
     };
+    if (options.startDate) returnJSON.filter.startDate = options.startDate;
+    if (options.endDate) returnJSON.filter.endDate = options.endDate;
 
     cb(null,returnJSON);
   });

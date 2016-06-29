@@ -46,7 +46,7 @@ describe('views/tools', function() {
 
 
   it('should open calender tool' ,function(bddone) {
-    this.timeout(20000);
+    this.timeout(25000);
    
 
     async.series([
