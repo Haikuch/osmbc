@@ -52,35 +52,33 @@ block content
           h4="Admin View"
           a(href="#{layout.htmlroot}/osmbc/admin") click here
     .col-md-8.hidden-xs
-      if changes
-        h4="Last Changes "
-          - var d = new Date();
-          - d= d.toISOString();
-          - d= d.substring(0,7);
-          a(href="#{layout.htmlroot}/changes/log?date="+d)  (more)
-        div
-          table.table.table-striped.table-condensed.table-responsive
-            thead
-              tr 
-                th
-                 | 
-                th
-                 | blog
-                th
-                 | user
-                th
-                 | table
-                th
-                 | what
-                th
-                 | Change
-                th
-                 | when
-            tbody
+      ul.nav.nav-tabs
+        - navtab = layout.user.getOption("index","navtab");
+        li(role="presentation" class = '#{(navtab=="changes")?"active":""}')
+          a(href="#{layout.htmlroot}/userconfig?view=index&option=navtab&value=changes")="Last Changes"
+        li(role="presentation" class = '#{(navtab=="wochennotiz")?"active":""}')
+          a(href="#{layout.htmlroot}/userconfig?view=index&option=navtab&value=wochennotiz")="Wochennotiz"
+      div
+        table.table.table-striped.table-condensed.table-responsive
+          thead
+            tr
+              th
+              th="blog"
+              th="user"
+              th="table"
+              th="what"
+              th="Change"
+              th="when"
+                - var d = new Date();
+                - d= d.toISOString();
+                - d= d.substring(0,7);
+                a(href="#{layout.htmlroot}/changes/log?date="+d)  (more)
+          tbody
+            if changes
               each change, i in changes
                 tr
                   td
-                    a(href='#{layout.htmlroot}/changes/' + change.id) 
+                    a(href='#{layout.htmlroot}/changes/' + change.id)
                       span.glyphicon.glyphicon-info-sign
                   td= change.blog
                   td= change.user
@@ -90,12 +88,12 @@ block content
                     :verbatim
                       !{change.htmlDiffText(40)}
                   td= layout.moment(change.timestamp).fromNow()
-        div
-          p
-            |only displaying changes 
-            span.osmbc-inserted
-              |inserted text 
-            span.osmbc-deleted
-              |removed text
+      div
+        p
+          |only displaying changes
+          span.osmbc-inserted
+            |inserted text
+          span.osmbc-deleted
+            |removed text
 
   div.footer
