@@ -159,24 +159,8 @@ function renderArticleId(req,res,next) {
             res.redirect(returnToUrl);    
           } else {
             debug("rendering page");
-            // Render the article with all calculated vars
-            // (res.rendervar.layout is set by the express routing
-            // mechanism before this router)
-          /*  var file = path.resolve(__dirname,'..','views', "article.jade");
-
-            var result = jade.renderFile(file,{layout:res.rendervar.layout,
-                                  article:article,
-                                  params:params,
-                                  placeholder:placeholder,
-                                  blog:result.blog,
-                                  changes:result.changes,
-                                  articleReferences:result.articleReferences,
-                                  usedLinks:result.usedLinks,
-                                  categories:categories});
-
-            res.end(result);return;*/
             res.set('content-type', 'text/html');
-            res.render('article',{layout:res.rendervar.layout,
+            res.render('articlenew',{layout:res.rendervar.layout,
                                   article:article,
                                   googleTranslateText:configModule.getConfig("automatictranslatetext"),
                                   params:params,
